@@ -1,0 +1,19 @@
+---
+# We need to ensure we have the desired directory structure on each host.
+- name: create container directories
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: "{{ sssdns_configdir }}", mode: '0750' }
+    - { path: "{{ sssdns_zonedir }}", mode: '0750' }
+
+# This directoy is only needed on the hidden primary(s).
+- name: create ansible zone directory
+  file:
+    path: "{{ sssdns_generated_zonedir }}"
+    state: directory
+    mode: "0750"
+  when: inventory_hostname in groups.dns_hiddenprimary
+

@@ -1,0 +1,32 @@
+---
+# We need to "import" the zones from a primary
+- name: get the active zone list from a primary
+  set_fact:
+    _dns_zones_active: "{{ hostvars[groups.dns_hiddenprimary|random]._dns_zones_active }}"
+
+# This task file will take care of a fresh host preparation
+- name: prepare host
+  import_tasks: _preparehost.yml
+
+# This task file will write the knot.conf
+- name: write config
+  import_tasks: _confgenerate.yml
+
+# To clean up the server, grab a list of zone files currently on the server
+# to compare them with the active zones. If a zone is no longer active,
+# it will be removed.
+- name: clean the server from no longer managed zones
+  import_tasks: _zonecleanup.yml
+  vars:
+    _ansible_managed_zones_dir: "{{ sssdns_zonedir }}"
+
+# In case the container is missing (on a fresh host for example, this task
+# file will take care of it.
+- name: ensure container is deployed
+  import_tasks: _container.yml
+
+# All the final steps like running the handlers and catching possible issues
+# with the new configuration
+- name: finalize tasks
+  import_tasks: _finalize.yml
+

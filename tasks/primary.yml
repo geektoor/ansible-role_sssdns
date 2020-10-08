@@ -1,0 +1,82 @@
+---
+# This list of DNS servers is later used in the template(s) to build the
+# zone files.
+- name: build list of dns servers names
+  set_fact:
+    _dnsservers: "{{ _dnsservers|default([]) + [ hostvars[item]._dnsservername ] }}"
+  loop: "{{ groups['dns_servers'] }}"
+  when: hostvars[item]._dnsservername is defined
+  tags:
+    - always
+
+# To ensure consistency, we sort the list
+- name: sort list of dns servers names
+  set_fact:
+    _dnsservers: "{{ _dnsservers|sort }}"
+  tags:
+    - always
+
+# This task file will take care of a fresh host preparation
+- name: prepare host
+  import_tasks: _preparehost.yml
+
+# We read all configured zones from the directory. Zone name = file name
+- name: load list of configured zones
+  find:
+    paths: "{{ sssdns_dns_zones }}/"
+    file_type: file
+  register: _dns_zones
+  delegate_to: localhost
+  tags:
+    - always
+
+# In case we update any zone, we will use this serial, so zones updated within
+# the same run will also have the same serial. And its simply based on
+# unixtime (seconds since 01.01.1970)
+- name: get epoch time for serial
+  command: "date +%s"
+  register: _dateepoch
+  changed_when: False
+  check_mode: no
+  delegate_to: localhost
+  tags:
+    - always
+
+- name: set zone serial to epoch
+  set_fact:
+    _dns_zone_serial: "{{ _dateepoch.stdout }}"
+  tags:
+    - always
+
+# This loop will take care of every found dns zone.
+- name: manage zone
+  include_tasks: _zoneload.yml
+  loop: "{{ _dns_zones.files }}"
+  loop_control:
+    label: "{{ item.path|basename }}"
+  vars:
+    _dns_zone: "{{ item.path|basename }}"
+  tags:
+    - zones
+
+# This task file will write the knot.conf
+- name: write config
+  import_tasks: _confgenerate.yml
+
+# To clean up the server, grab a list of zone files currently on the server
+# to compare them with the active zones. If a zone is no longer active,
+# it will be removed.
+- name: clean the server from no longer managed zones
+  import_tasks: _zonecleanup.yml
+  vars:
+    _ansible_managed_zones_dir: "{{ sssdns_generated_zonedir }}"
+
+# In case the container is missing (on a fresh host for example, this task
+# file will take care of it.
+- name: ensure container is deployed
+  import_tasks: _container.yml
+
+# All the final steps like running the handlers and catching possible issues
+# with the new configuration
+- name: finalize tasks
+  import_tasks: _finalize.yml

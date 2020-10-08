@@ -1,0 +1,5 @@
+---
+# As we manage a podman container, you need to have the podman collection to
+# be used.
+collections:
+  - containers.podman

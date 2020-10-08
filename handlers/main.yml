@@ -1,0 +1,7 @@
+---
+# As we need to catch a reload failure, we just use this handler to set a
+# variable and later in the role take care of the reload
+- name: reload knot
+  set_fact:
+    _knot_restart_notified: True
+  when: not _containercreated.changed

@@ -1,0 +1,14 @@
+---
+# We just write the knot.conf based on the template, thats where all the magic
+# happens.
+- name: write knot.conf
+  template:
+    src: knot.conf.j2
+    dest: "{{ sssdns_configdir }}/{{ sssdns_configname }}"
+    backup: True
+  register: _confgenerated
+  notify:
+    - reload knot
+  when:
+    - sssdns_configdir is defined
+    - sssdns_configname is defined

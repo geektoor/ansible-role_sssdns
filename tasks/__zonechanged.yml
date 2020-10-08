@@ -1,0 +1,94 @@
+---
+# In case we have a TSIG key defined with the same ID as the domain name, the
+# domain will be recognized as dynamically managed. If this is the case, the
+# zone will not be modified anymore after it was successfully deployed.
+# Otherwise we would override the zone with the (most likely empty default)
+# and all changes are lost. If you really need to override the zone, delete
+# it from the server by yourself.
+- name: check if zone is dynamically managed
+  set_fact:
+    _is_dyn_zone: True
+  when: 
+    - sssdnskey_sets is defined
+    - "item.path|basename in (sssdnskey_sets|map(attribute='id')|list)"
+
+# In case the zone was changed, we need to copy the generated file to the DNS
+# servers zone directory. We will also create a backup of the previous file,
+# as if the validation fails, we can roll back to the last known good file.
+- name: copy zone to server when it was changed and not dynamically managed or is missing
+  copy:
+    src: "{{ sssdns_generated_zonedir }}/{{ item.path|basename }}"
+    dest: "{{ sssdns_zonedir }}/{{ item.path|basename }}.dnszone"
+    remote_src: True
+    backup: True
+  register: _dnszonecopy
+  when:
+    - (_dnszoneupdated.changed and _is_dyn_zone is not defined) or not _zonefileexists.stat.exists
+
+# The serial is added only of the zone really was changed and copied to the
+# DNS servers zone directory. Would the serial be part of the template
+# generated file, every run would change the file and require an update.
+- name: Add serial to zone
+  replace:
+    path: "{{ sssdns_zonedir }}/{{ item.path|basename }}.dnszone"
+    regexp: "ANSIBLE_SERIAL_PLACEHOLDER"
+    replace: "{{ _dns_zone_serial }}"
+  when: _dnszonecopy.changed
+
+# This task will actually verify the freshly generated zone is a valid DNS
+# zone. In case of any syntax errors or otherwise invalid entries, the
+# verify will fail.
+- name: verify zone is valid
+  command: "podman run --rm -v {{ sssdns_configdir }}:/config:Z -v {{ sssdns_zonedir }}:/storage:Z cznic/knot kzonecheck -o {{ item.path|basename }} /storage/{{ item.path|basename }}.dnszone"
+  ignore_errors: True
+  register: _dnszoneverify
+  notify:
+   - reload knot
+  when: _dnszonecopy.changed
+
+# If the verify filed, the zone is not a dynamicly managed one, and we have
+# a backup (cause the zone was successfully deployed prior), we will revert
+# to that last known good to ensure an unexpected restart of the DNS will
+# not prevent the zone from beeing loaded.
+- name: revert zone if invalid
+  copy:
+    src: "{{ _dnszonecopy.backup_file }}"
+    dest: "{{ sssdns_zonedir }}/{{ item.path|basename }}.dnszone"
+    remote_src: True
+  register: _zonereverted
+  when:
+    - _is_dyn_zone is not defined
+    - _dnszoneupdated.changed
+    - _dnszoneverify.failed
+    - _dnszonecopy.backup_file is defined
+
+# The same is needed for the template, otherwise both would no longer match
+# and could cause trouble. So unless you don't fix your broken zone, the
+# run will always fail and revert.
+- name: revert template if invalid
+  copy:
+    src: "{{ _dnszoneupdated.backup_file }}"
+    dest: "{{ sssdns_generated_zonedir }}/{{ item.path|basename }}"
+    remote_src: True
+  when:
+    - _is_dyn_zone is not defined
+    - _dnszoneupdated.changed
+    - _dnszoneverify.failed
+    - _dnszoneupdated.backup_file is defined
+
+# In case the verify was okay, we remove the backups of the template and the
+# zone, as they're no longer needed.
+- name: remove backup of zone
+  file:
+    path: "{{ backupfile }}"
+    state: absent
+  loop:
+    - "{{ _dnszonecopy.backup_file }}"
+    - "{{ _dnszoneupdated.backup_file }}"
+  loop_control:
+    label: "{{ backupfile }}"
+    loop_var: backupfile
+  when:
+   - _dnszonecopy.changed
+   - _dnszonecopy.backup_file is defined
+

@@ -1,0 +1,13 @@
+[Unit]
+Description={{ _container_name }} container
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Restart=on-failure
+ExecStart=/usr/bin/podman start -a {{ _container_name }}
+ExecStop=/usr/bin/podman stop {{ _container_name }}
+KillMode=none
+
+[Install]
+WantedBy=multi-user.target

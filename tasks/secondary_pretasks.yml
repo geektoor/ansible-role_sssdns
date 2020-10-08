@@ -1,0 +1,24 @@
+---
+# Currently only numbers between 1 and 9 are supported as DNS server ID. So
+# we check for it and fail in case its not set.
+- name: ensure dnsid is within range
+  assert:
+    that:
+      - dnsid >= 1
+      - dnsid <= 9
+    quiet: yes
+    fail_msg: "dnsid for host {{ inventory_hostname }} is out of range."
+
+# When we hve multiple dnsserverdomains, we will iterate over the list and
+# spread the DNS servers across the domains. So your first DNS server will
+# be put in the first listed domain, the second in the second and so on. If
+# you have more servers than domains, it will just start over again. 
+- name: caluclate my domain id
+  set_fact:
+    _dnsdomainid: "{{ (dnsid-1) - (sssdns_dnsserverdomains|length|int * ((dnsid-1)/sssdns_dnsserverdomains|length|int)|int) }}"
+
+# So based on the dnsdomainid we'll actually set the DNS servers name.
+- name: set my dnsservername
+  set_fact:
+    _dnsservername: "{{ sssdns_nameserverprefix }}{{ dnsid }}.{{ sssdns_dnsserverdomains[_dnsdomainid|int] }}."
+

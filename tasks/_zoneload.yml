@@ -1,0 +1,53 @@
+---
+# Each zonefile is a YAML file, so we can simply include its variables
+# to use them.
+- name: "load zone data for {{ item.path|basename }} from yml"
+  include_vars:
+    file: "{{ playbook_dir }}/vars/zones/{{ item.path|basename }}"
+    name: sssdns_zonedata
+
+# This task will write a DNS zone file based on the default template,
+# or, if defined and found, a template named "sssdns_dnszone_{{templatename}}"
+# This can be useful if you want to have certain hosts defined to a subset
+# of domains. So in each of those zones, simply set the template variable
+# and ensure the template exists in a templates directory. If the template
+# is missing, we'll default fall back to the shipped template. And if you
+# don't like the shipped dnszone file, you can place a modified version in
+# your templates directory and name it "sssdns_dnszone_default.j2" to override
+# the default template in your deployment.
+- name: "write zonefile for {{ item.path|basename }}"
+  template:
+    src: "{{ lookup('first_found', params)}}"
+    dest: "{{ sssdns_generated_zonedir }}/{{ item.path|basename }}"
+    backup: True
+  vars:
+    params:
+      files:
+        - "sssdns_dnszone_{{ sssdns_zonedata.template|default('default') }}.j2"
+        - dnszone.j2
+      paths:
+        - 'templates'
+  register: _dnszoneupdated
+
+# In case a zone file is gone, but the template is still there, we regenerate
+# the file. This is just a safety net.
+- name: check if managed zone is already deployed
+  stat:
+    path: "{{ sssdns_zonedir }}/{{ item.path|basename }}.dnszone"
+  register: _zonefileexists
+
+# If the zone was actually modified, or the zonefile is missing, we trigger
+# the needed tasks to actually (re-)create it.
+- name: run tasks because zone was changed or is missing
+  include_tasks: __zonechanged.yml
+  when: _dnszoneupdated.changed or not _zonefileexists.stat.exists
+
+# If the zone was already up2date, or it passed validation, we add the zone
+# name to our list of active zones. This list will later be used to build the
+# main config file, listing all the zones.
+- name: add zone to list of active zones
+  set_fact:
+    _dns_zones_active: "{{ _dns_zones_active|default([]) + [ _dns_zone ] }}"
+  when: 
+    - not _dnszoneupdated.changed or _zonereverted.changed or (_dnszoneverify.rc is defined and _dnszoneverify.rc == 0) or (_dnszoneupdated.changed and _is_dyn_zone is defined)
+

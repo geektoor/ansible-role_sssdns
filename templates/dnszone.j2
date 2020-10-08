@@ -1,0 +1,69 @@
+{% if _dns_zone in sssdns_dnsserverdomains %}
+{% set _primarydns = sssdns_nameserverprefix+'1' %}
+{% else %}
+{% set _primarydns = _dnsservers[0] %}
+{% endif %}
+$TTL {{ sssdns_zonedata.ttl|default('3600') }} 
+@ IN SOA {{ _primarydns }} {{ sssdns_zonedata.hostmaster|default('hostmaster.michels.work.') }} (
+                                                ANSIBLE_SERIAL_PLACEHOLDER  ; Serial
+                                                {{ sssdns_zonedata.refresh|default('10800') }}       ; Refresh  after 3 hours
+                                                {{ sssdns_zonedata.retry|default('3600') }}        ; Retry after 1 hour
+                                                {{ sssdns_zonedata.expire|default('1209600') }}     ; Expire after 2 weeks
+                                                {{ sssdns_zonedata.min_ttl|default('86400') }} )     ; Minimum TTL of 1 day
+
+{% if _dns_zone in sssdns_dnsserverdomains %}
+{%     for _mainserver in groups.dns_servers %}
+{{ '%-20s'|format("@") }} 86400  IN NS     {{ sssdns_nameserverprefix }}{{ hostvars[_mainserver].dnsid }}
+{%         if hostvars[_mainserver].sss_public_ipv4 is defined %}
+{{ '%-20s'|format("ns"+hostvars[_mainserver].dnsid|string) }} 86400  IN A      {{ hostvars[_mainserver].sss_public_ipv4 }}
+{%         endif %}
+{%         if hostvars[_mainserver].sss_public_ipv6 is defined %}
+{{ '%-20s'|format("ns"+hostvars[_mainserver].dnsid|string) }} 86400  IN AAAA   {{ hostvars[_mainserver].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}
+{%         endif %}
+{%     endfor %}
+
+{%     for _primarydns in groups.dns_hiddenprimary %}
+{%         if hostvars[_primarydns].sss_public_ipv4 is defined %}
+{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN A      {{ hostvars[_primarydns].sss_public_ipv4 }}
+{%         endif %}
+{%         if hostvars[_primarydns].sss_public_ipv6 is defined %}
+{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN AAAA   {{ hostvars[_primarydns].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}
+{%         endif %}
+{%     endfor %}
+{%     for dnsserver in groups.dns_servers %}
+{%         if hostvars[dnsserver].sss_public_ipv4 is defined %}
+{{ '%-27s'|format(dnsserver.split(".")[0]|lower) }} IN A      {{ hostvars[dnsserver].sss_public_ipv4 }}
+{%         endif %}
+{%         if hostvars[dnsserver].sss_public_ipv6 is defined %}
+{{ '%-27s'|format(dnsserver.split(".")[0]|lower) }} IN AAAA   {{ hostvars[dnsserver].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}
+{%         endif %}
+{%    endfor %}
+heartbeat            60     IN TXT    "imalive"
+{% else %}
+{%     for _dns_nameserver in _dnsservers %}
+{{ '%-20s'|format("@") }} 86400  IN NS     {{ _dns_nameserver }}
+{%     endfor %}
+{% endif %}
+
+{% if sssdns_zonedata.records is defined %}
+;
+;{{ '%-20s'|format('host') }}{{ '%-6s'|format('TTL') }} IN {{ '%-6s'|format('Type') }} Data
+;
+
+{% 	for dns_record in sssdns_zonedata.records %}
+{% 		if (dns_record.type|upper == "NS" or dns_record.type|upper == "CNAME") and (dns_record.host == '@' or dns_record.host == _dns_zone+".") %}
+{% 			continue %}
+{% 		endif %}
+{% 		if dns_record.type|upper == "TXT" %}
+{% 			set dnsrecorddata = '"'+dns_record.data+'"' %}
+{% 		else %}
+{% 			set dnsrecorddata = dns_record.data %}
+{% 		endif %}
+{% 		if dns_record.ttl is defined and dns_record.ttl is number %}
+{% 			set dnsrecordttl = dns_record.ttl %}
+{% 		else %}
+{% 			set dnsrecordttl = '' %}
+{% 		endif %}
+{{ '%-20s'|format(dns_record.host) }} {{ '%-6s'|format(dnsrecordttl)}} IN {{ '%-6s'|format(dns_record.type|upper) }} {{ dnsrecorddata }}
+{% 	endfor %}
+{% endif %}

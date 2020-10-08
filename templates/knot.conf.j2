@@ -1,0 +1,139 @@
+{% set active_dnsservers = [] %}
+# {{ ansible_managed }}
+server:
+{% if _dnsservername is defined %}
+    identity: "{{ _dnsservername }}"
+    nsid: "{{ _dnsservername }}"
+{% endif %}
+    version: "{{ sssdns_version }}"
+    rundir: "/rundir"
+{% if sssdns.user is defined and sssdns.group is defined %}
+    user: {{ sssdns.user }}:{{ sssdns.group }}
+{% else %}
+#    user: knot:knot
+{% endif %}
+{% for listenaddr in sssdns_listen %}
+    listen: {{ listenaddr }}
+{% endfor %}
+    edns-client-subnet: on
+
+database:
+{% if sssdns.storage is defined %}
+    storage: "{{ sssdns.storage }}"
+{% else %}
+    storage: "/storage"
+{% endif %}
+
+mod-cookies:
+  - id: default
+    secret-lifetime: 30h # The server secret is regenerated every 30 hours
+
+mod-rrl:
+  - id: default
+    rate-limit: 200   # Allow 200 resp/s for each flow
+    slip: 2           # Every other response slips
+
+remote:
+{% if inventory_hostname in groups.dns_servers %}
+{% for hiddenprimary in groups.dns_hiddenprimary %}
+  - id: {{ hiddenprimary }}
+    address: {{ hostvars[hiddenprimary].ansible_host }}@5300
+{% endfor %}
+{% endif %}
+{% for dnsserver in groups.dns_servers %}
+{%     if inventory_hostname in groups.dns_hiddenprimary %}
+{%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
+  - id: {{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
+{%             if (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is not defined) or (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is defined and (hostvars[dnsserver].ansible_host != hostvars[dnsserver].sss_public_ipv4)) %}
+    address: {{ hostvars[dnsserver].ansible_host }}@53
+{%             endif %}
+{%             if hostvars[dnsserver].sss_public_ipv4 is defined %}
+    address: {{ hostvars[dnsserver].sss_public_ipv4 }}@53
+{%             endif %}
+{%             if hostvars[dnsserver].sss_public_ipv6 is defined %}
+    address: {{ hostvars[dnsserver].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}@53
+{%             endif %}
+{%         endif %}
+{{    active_dnsservers.append(hostvars[dnsserver].dnsid) -}}
+{%    endif %}
+{% endfor %}
+
+key:
+{% if inventory_hostname in groups.dns_hiddenprimary %}
+{%     if sssdnskey_sets is defined %}
+{%         for keyset in sssdnskey_sets %}
+  - id: key_{{ keyset.id }}
+    algorithm: {{ keyset.algorithm }}
+    secret: {{ keyset.secret }}
+{%         endfor %}
+{%     endif %}
+{% endif %}
+
+acl:
+{% if inventory_hostname in groups.dns_servers %}
+{%     for hiddenprimary in groups.dns_hiddenprimary %}
+  - id: {{ hiddenprimary }}
+    address: {{ hostvars[hiddenprimary].ansible_host }}
+    action: notify
+{%     endfor %}
+{% endif %}
+{% if inventory_hostname in groups.dns_hiddenprimary %}
+{%     for dnsserver in groups.dns_servers %}
+{%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
+  - id: acl_{{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
+{%             if (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is not defined) or (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is defined and (hostvars[dnsserver].ansible_host != hostvars[dnsserver].sss_public_ipv4)) %}
+    address: {{ hostvars[dnsserver].ansible_host }}
+{%             endif %}
+{%             if hostvars[dnsserver].sss_public_ipv4 is defined %}
+    address: {{ hostvars[dnsserver].sss_public_ipv4 }}
+{%             endif %}
+{%             if hostvars[dnsserver].sss_public_ipv6 is defined %}
+    address: {{ hostvars[dnsserver].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}
+{%             endif %}
+    action: transfer
+{%         endif %}
+{%     endfor %}
+{%     if sssdnskey_sets is defined %}
+{%         for keyset in sssdnskey_sets %}
+  - id: acl_{{ keyset.id }}
+    key: key_{{ keyset.id }}
+    action: [ transfer, update ]
+    update-type: [ A, AAAA, TXT, CNAME, SRV ]
+{%         endfor %}
+{%     endif %}
+{% endif %}
+
+template:
+  - id: default
+    storage: "/storage"
+    file: "%s.dnszone"
+    global-module: mod-cookies/default # Enable DNS Cookies globally
+    global-module: mod-rrl/default # Ratelimiting
+{% if inventory_hostname in groups.dns_hiddenprimary %}
+{%     for dnsserver in groups.dns_servers %}
+{%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
+    notify: {{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
+{%         endif %}
+{%     endfor %}
+{% endif %}
+
+
+zone:
+{% for active_dns_zone in _dns_zones_active %}
+  - domain: {{ active_dns_zone }}
+{%     if inventory_hostname in groups.dns_hiddenprimary %}
+{%         for active_dnsserver in active_dnsservers %}
+    acl: acl_{{ sssdns_nameserverprefix }}{{ active_dnsserver }}
+{%         endfor %}
+{%         if active_dns_zone in sssdnskey_sets|map(attribute='id')|list %}
+    acl: acl_{{ active_dns_zone }}
+{%         endif %}
+{%     else %}
+    template: default
+{%         for hiddenprimary in groups.dns_hiddenprimary %}
+    acl: {{ hiddenprimary }}
+    master: {{ hiddenprimary }}
+{%         endfor %}
+{%     endif %}
+{% endfor %}
+

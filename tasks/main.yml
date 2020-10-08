@@ -1,0 +1,5 @@
+---
+- name: This role needs to be called with tasks for primary or secondary servers
+  fail:
+    msg: "Do not just include the role, you need to import the right tasks."
+

@@ -1,0 +1,43 @@
+---
+# These are the defaults for the role sssdns, Svens Super Simple DNS Server
+# role (that actually is no longer simple, so its more sophisticated ;).
+
+# The version respond to queries for version.bind in CHAOS
+sssdns_version: "SSSDNS 1.0"
+
+# Name of the DNS servers config file
+sssdns_configname: "knot.conf"
+
+# Name of the DNS servers config directory
+sssdns_configdir: "/srv/knot/config/"
+
+# Name of the DNS servers zone directory
+sssdns_zonedir: "/srv/knot/storage/"
+
+# Name of the DNS servers diretory to store generated zonefiles (without
+# the serial)
+sssdns_generated_zonedir: "/srv/knot/ansible-generated-zones/"
+
+# Ports the Server should listen to (by default ipv4/ipv6 any, port 53)
+sssdns_listen:
+  - 0.0.0.0@53
+  - ::@53
+
+# You can specify the hostname prefix for your main dns servers. Their name
+# is build like so: {{nameserverprefix}}{{dnsid}}.{{dnsserverdomains}}
+# So for example if you set the following variables:
+# sssdns_nameserverprefix: dns
+# sssdns_dnsserverdomains: example.com
+#
+# Your DNS servers will be named:
+# - dns1.example.com
+# - dns2.example.com
+sssdns_nameserverprefix: ns
+
+# With this variable, the directory is set to the directory containing all
+# your DNS zone files (the yml ones).
+sssdns_dns_zones: "{{ playbook_dir }}/vars/zones/"
+
+# On some systems, systemd-resolved is active, preventing a DNS server from
+# listening to "any@53". So by default we will disable systemd-resolved.
+sssdns_disable_systemd_resolved: True

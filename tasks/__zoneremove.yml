@@ -1,0 +1,14 @@
+---
+# We remove the ansible generated zone files from the primary(ies) if the zone
+# is no longer managed.
+- name: "remove {{ _remove_dns_zone }} from ansible managed zones"
+  file:
+    path: "{{ sssdns_generated_zonedir }}/{{ _remove_dns_zone }}"
+    state: absent
+  when: inventory_hostname in groups.dns_hiddenprimary
+
+# We also remove the zone from the DNS servers zone directory.
+- name: "remove {{ _remove_dns_zone }} from DNS server"
+  file:
+    path: "{{ sssdns_zonedir }}/{{ _remove_dns_zone }}.dnszone"
+    state: absent

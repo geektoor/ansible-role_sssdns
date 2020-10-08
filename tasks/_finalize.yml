@@ -1,0 +1,58 @@
+---
+# As we want to catch restart issues (corrupt config), we will now trigger
+# the handlers, so we can later catch errors.
+- name: run notified handlers to reload the servers if needed
+  meta: flush_handlers
+
+# As the handler doesn't actually restart the service (as it would not
+# support to register the feedback), we will do it now if the variable
+# was set to restart knot.
+- name: restart knot
+  command: "podman exec -ti knotd knotc reload"
+  register: _knot_restart
+  ignore_errors: true
+  when: _knot_restart_notified is defined
+
+# So if the config was changed and failed to reload, we will roll back the
+# backup of the config to ensure the config would still work in case of
+# an unexpected restart. The play will keep failing unless its fixed, but
+# the DNS server should keep working with the old config.
+- name: restore knot.conf if we have a backup and the reload failed
+  copy:
+    src: "{{ _confgenerated.backup_file }}"
+    dest: "{{ sssdns_configdir }}/{{ sssdns_configname }}"
+    remote_src: True
+  when:
+    - _confgenerated.changed
+    - _knot_restart.failed is defined
+    - _knot_restart.failed
+    - _confgenerated.backup_file is defined
+
+# We don't want to left backups of our config behind, we will remove them.
+- name: remove backup of knot.conf
+  file:
+    path: "{{ _confgenerated.backup_file }}"
+    state: absent
+  when:
+   - _confgenerated.changed
+   - _confgenerated.backup_file is defined
+
+# In case a zone failed to reload (but we catched it, restored it, so the
+# current served zone is the last known working on), we will fail at the
+# end to ensure its clear that there was an issue with this play.
+- name: fail if at least one zone reported issues
+  fail:
+    msg: "zone loading failed"
+  loop: "{{ groups.dns_hiddenprimary }}"
+  when:
+    - inventory_hostname not in groups.dns_hiddenprimary
+    - hostvars[item]._dnszoneverify.failed is defined
+    - hostvars[item]._dnszoneverify.failed
+
+# Same case if the knot.conf was broken
+- name: fail if knot.conf had errors
+  fail:
+    msg: "knot.conf broken"
+  when:
+    - _knot_restart.failed is defined
+    - _knot_restart.failed

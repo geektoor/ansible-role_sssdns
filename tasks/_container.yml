@@ -1,0 +1,48 @@
+---
+# On some installations, systemd-resolved is active, preventing the DNS
+# server from listening to "any@53". For that reason we disable the service
+# on those servers. If you don't listen to any, or a different port, or
+# don't want the service be disabled, set sssdns_disable_systemd_resolved
+# to False.
+- name: disable systemd-resolved
+  service:
+    name: systemd-resolved
+    enabled: no
+    state: stopped
+  when: sssdns_disable_systemd_resolved|bool
+
+# This task will create the actual knotd container.
+- name: create knotd
+  podman_container:
+    name: knotd
+    image: cznic/knot
+    command: knotd
+    network: host
+    volume:
+      - /srv/knot/storage:/storage:Z
+      - /srv/knot/config:/config:Z
+  register: _containercreated
+
+# As podman doesn't run as a service, we need to take care of the containers
+# at boot time ourself. So we simply create a service to start the container.
+- name: create knotd service
+  template:
+    src: systemd.service.j2
+    dest: "/etc/systemd/system/{{ _container_name }}-container.service"
+    mode: 0600
+    owner: root
+    group: root
+  vars:
+    _container_name: knotd
+  when:
+    - _containercreated.changed is defined
+    - _containercreated.changed
+
+# We also need to enable the container service.
+- name: enable knotd service
+  service:
+    name: knotd-container
+    enabled: true
+  when:
+    - _containercreated.changed is defined
+    - _containercreated.changed
