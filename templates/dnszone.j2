@@ -4,7 +4,7 @@
 {% set _primarydns = _dnsservers[0] %}
 {% endif %}
 $TTL {{ sssdns_zonedata.ttl|default('3600') }} 
-@ IN SOA {{ _primarydns }} {{ sssdns_zonedata.hostmaster|default('hostmaster.michels.work.') }} (
+@ IN SOA {{ _primarydns }} {{ sssdns_zonedata.zoneadmin|default(sssdns_zoneadmin) }} (
                                                 ANSIBLE_SERIAL_PLACEHOLDER  ; Serial
                                                 {{ sssdns_zonedata.refresh|default('10800') }}       ; Refresh  after 3 hours
                                                 {{ sssdns_zonedata.retry|default('3600') }}        ; Retry after 1 hour

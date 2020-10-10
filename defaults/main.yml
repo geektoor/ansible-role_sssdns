@@ -34,6 +34,20 @@ sssdns_listen:
 # - dns2.example.com
 sssdns_nameserverprefix: ns
 
+# In every DNS zone, the SOA (Start of Authority) contains an E-Mail address
+# of the person responsible for the zone. Since '@' is not possible, you have
+# to replace the @-sign with a dot (.). So zoneadmin@example.com becomes
+# zoneadmin.example.com. And as DNS automatically appends the zone name if
+# there is no dot at the end, you have to add that dot in the end as well.
+# If your zone name is the same as the E-Mail address domain, you just can
+# write "zoneadmin" here. If your E-Mail address contains a dot prior the
+# @-sign, please quote it with a backslash (\).
+#
+# By default its set to your first listed DNS Servers Domain, but you can
+# also override it within each zone using the zoneadmin parameter. So in
+# this example it becomes: zoneadmin@example.com.
+sssdns_zoneadmin: "zoneadmin.{{ sssdns_dnsserverdomains[0] }}."
+
 # With this variable, the directory is set to the directory containing all
 # your DNS zone files (the yml ones).
 sssdns_dns_zones: "{{ playbook_dir }}/vars/zones/"
