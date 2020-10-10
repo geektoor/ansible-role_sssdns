@@ -20,22 +20,91 @@ Role Variables
 
 There are only a very few variables that you need to set, all the rest will be generated for you based on your inventory/variables.
 
+[cols="5", options="header"]
+|===
+| Variable
+| Required
+| Default
+| Choices
+| Comments
 
-| Variable                        | Required | Default                            | Choices                                    | Comments                                 |
-|---------------------------------|----------|------------------------------------|--------------------------------------------|------------------------------------------|
-| sssdns_dnsserverdomains         | yes      | not set                            | list                                       | sssdns_domainserverdomains: [ "example.com", "example.org" ] |
-| dnsid                           | yes      | not set                            | id per host from 1-9                       | best to be put into the host vars        |
-| sss_public_ipv4                 | yes      | not set                            | IPv4 Address                               | set only on the exposed DNS servers      |
-| sss_public_ipv6                 | yes      | not set                            | IPv6 Address(with netmask)                 | set only on the exposed DNS servers      |
-| sssdns_listen                   | yes      | any@53                             | list of listen addresses                   | set on the hidden primary to 0.0.0.0@5300 |
-| sssdns_configname               | no       | knot.conf                          | file name of config                        | keep the default                         |
-| sssdns_configdir                | no       | /srv/knot/config/                  | config dir on the host                     | this dir will be mapped into the container |
-| sssdns_zonedir                  | no       | /srv/knot/storage/                 | zone dir on the host                       | this dir will be mapped into the container |
-| sssdns_generated_zonedir        | no       | /srv/knot/ansible-generated-zones/ | dir to store the generated zone files into | only needed on the primary |
-| sssdns_nameserverprefix         | no       | "ns"                               | string                                     | if you like "dns1", "dns2" etc instead of just "ns1", "ns2", you can change it here |
-| sssdns_zoneadmin                | no       | zoneadmin.firstdnsserverdomain | string | The default email address for the SOA records |
-| sssdns_dns_zones                | no       | {{ playbook_dir }}/vars/zones/ | local directory | The place you'll store your zone YAMLs on your controller |
-| sssdns_disable_systemd_resolved | no | True | bool | If you don't want systemd-resolved to be disabled, set to False (not recommended) |
+| sssdns_dnsserverdomains
+| yes
+| not set
+| list
+| sssdns_domainserverdomains: [ "example.com", "example.org" ]
+
+| dnsid
+| yes
+| not set
+| id per host from 1-9
+| best to be put into the host vars
+
+| sss_public_ipv4
+| yes
+| not set
+| IPv4 Address
+| set only on the exposed DNS servers
+
+| sss_public_ipv6
+| yes
+| not set
+| IPv6 Address(with netmask)
+| set only on the exposed DNS servers
+
+| sssdns_listen
+| yes
+| [ "0.0.0.0@53", "::@53" ]
+| list of listen addresses
+| set on the hidden primary to: [ "0.0.0.0@5300", "::@53" ]
+
+| sssdns_configname
+| no
+| knot.conf
+| file name of config
+| keep the default
+
+| sssdns_configdir
+| no
+| /srv/knot/config/
+| config dir on the host
+| this dir will be mapped into the container
+
+| sssdns_zonedir
+| no
+| /srv/knot/storage/
+| zone dir on the host
+| this dir will be mapped into the container
+
+| sssdns_generated_zonedir
+| no
+| /srv/knot/ansible-generated-zones/
+| dir to store the generated zone files into
+| only needed on the primary
+
+| sssdns_nameserverprefix
+| no
+| "ns"
+| string
+| if you like "dns1", "dns2" etc instead of just "ns1", "ns2", you can change it here
+
+| sssdns_zoneadmin
+| no
+| zoneadmin.firstdnsserverdomain
+| string
+| The default email address for the SOA records
+
+| sssdns_dns_zones
+| no
+| {{ playbook_dir }}/vars/zones/
+| local directory
+| The place you'll store your zone YAMLs on your controller
+
+| sssdns_disable_systemd_resolved
+| no
+| True
+| bool
+| If you don't want systemd-resolved to be disabled, set to False (not recommended) |
 
 
 Dependencies
