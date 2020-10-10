@@ -49,5 +49,5 @@
   set_fact:
     _dns_zones_active: "{{ _dns_zones_active|default([]) + [ _dns_zone ] }}"
   when: 
-    - not _dnszoneupdated.changed or _zonereverted.changed or (_dnszoneverify.rc is defined and _dnszoneverify.rc == 0) or (_dnszoneupdated.changed and _is_dyn_zone is defined)
+    - not _dnszoneupdated.changed or _zonereverted.changed or (_dnszoneverify.rc is defined and _dnszoneverify.rc == 0) or (_dnszoneupdated.changed and _dynzonecheck is not skipped)
 

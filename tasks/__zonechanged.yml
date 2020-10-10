@@ -8,6 +8,7 @@
 - name: check if zone is dynamically managed
   set_fact:
     _is_dyn_zone: True
+  register: _dynzonecheck
   when: 
     - sssdnskey_sets is defined
     - "item.path|basename in (sssdnskey_sets|map(attribute='id')|list)"
@@ -23,7 +24,7 @@
     backup: True
   register: _dnszonecopy
   when:
-    - (_dnszoneupdated.changed and _is_dyn_zone is not defined) or not _zonefileexists.stat.exists
+    - (_dnszoneupdated.changed and _dynzonecheck is skipped) or not _zonefileexists.stat.exists
 
 # The serial is added only of the zone really was changed and copied to the
 # DNS servers zone directory. Would the serial be part of the template
@@ -57,7 +58,7 @@
     remote_src: True
   register: _zonereverted
   when:
-    - _is_dyn_zone is not defined
+    - _dynzonecheck is skipped
     - _dnszoneupdated.changed
     - _dnszoneverify.failed
     - _dnszonecopy.backup_file is defined
@@ -71,7 +72,7 @@
     dest: "{{ sssdns_generated_zonedir }}/{{ item.path|basename }}"
     remote_src: True
   when:
-    - _is_dyn_zone is not defined
+    - _dynzonecheck is skipped
     - _dnszoneupdated.changed
     - _dnszoneverify.failed
     - _dnszoneupdated.backup_file is defined
