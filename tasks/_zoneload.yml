@@ -3,7 +3,7 @@
 # to use them.
 - name: "load zone data for {{ item.path|basename }} from yml"
   include_vars:
-    file: "{{ playbook_dir }}/vars/zones/{{ item.path|basename }}"
+    file: "{{ sssdns_dns_zones }}/{{ item.path|basename }}"
     name: sssdns_zonedata
 
 # This task will write a DNS zone file based on the default template,
