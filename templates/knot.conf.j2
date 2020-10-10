@@ -125,8 +125,10 @@ zone:
 {%         for active_dnsserver in active_dnsservers %}
     acl: acl_{{ sssdns_nameserverprefix }}{{ active_dnsserver }}
 {%         endfor %}
-{%         if active_dns_zone in sssdnskey_sets|map(attribute='id')|list %}
+{%         if sssdnskey_sets is defined %}
+{%             if active_dns_zone in sssdnskey_sets|map(attribute='id')|list %}
     acl: acl_{{ active_dns_zone }}
+{%             endif %}
 {%         endif %}
 {%     else %}
     template: default
