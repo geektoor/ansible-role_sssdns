@@ -105,7 +105,7 @@ There are only a very few variables that you need to set, all the rest will be g
 | True
 | bool
 | If you don't want systemd-resolved to be disabled, set to False (not recommended) |
-
+|===
 
 Dependencies
 ------------
