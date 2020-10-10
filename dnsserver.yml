@@ -1,0 +1,27 @@
+---
+- name: Pre Tasks on DNS Servers
+  gather_facts: no
+  hosts: dns_servers
+  tasks:
+    - name: Configure Secondary DNS
+      include_role:
+        name: sssdns
+        tasks_from: secondary_pretasks
+
+- name: Play for Primary DNS
+  gather_facts: no
+  hosts: dns_hiddenprimary
+  tasks:
+    - name: Configure Primary DNS
+      include_role:
+        name: sssdns
+        tasks_from: primary
+
+- name: Play for Secondary DNS
+  gather_facts: no
+  hosts: dns_servers
+  tasks:
+    - name: Configure Secondary DNS
+      include_role:
+        name: sssdns
+        tasks_from: secondary

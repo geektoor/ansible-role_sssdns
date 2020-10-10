@@ -1,0 +1,59 @@
+SSSDNS
+======
+
+A role to manage knot dns (containerized) as a (public) dns server setup for your domains.
+
+
+Requirements
+------------
+
+You need to have at least 3 hosts available, CentOS8/RHEL8 based, from which two will be exposed as DNS servers and the 3rd one will act as a hidden primary to publish data to your DNS servers. Its also recommended to use two public domains from different toplevel domains your DNS servers will be hosted in.
+
+An example configuration would be: +
+Domains: example.com, example.org +
+Hosts: servera.example.com, serverb.example.org, serverx.somewhere.tld
+
+Best case, the domains are registered with glue records, so the nameservers of those domains are within the domain itself: ns1.example.com and ns2.example.com for example.com and ns1.example.org and ns2.example.org for example.org. This is to avoid "cross references" which can cause trouble if something fails in the chain of references. The current template will also add the needed records to those domains, so you can use this fully self hosting.
+
+Role Variables
+--------------
+
+There are only a very few variables that you need to set, all the rest will be generated for you based on your inventory/variables.
+
+
+| Variable                        | Required | Default                            | Choices                                    | Comments                                 |
+|---------------------------------|----------|------------------------------------|--------------------------------------------|------------------------------------------|
+| sssdns_dnsserverdomains         | yes      | not set                            | list                                       | sssdns_domainserverdomains: [ "example.com", "example.org" ] |
+| dnsid                           | yes      | not set                            | id per host from 1-9                       | best to be put into the host vars        |
+| sss_public_ipv4                 | yes      | not set                            | IPv4 Address                               | set only on the exposed DNS servers      |
+| sss_public_ipv6                 | yes      | not set                            | IPv6 Address(with netmask)                 | set only on the exposed DNS servers      |
+| sssdns_listen                   | yes      | any@53                             | list of listen addresses                   | set on the hidden primary to 0.0.0.0@5300 |
+| sssdns_configname               | no       | knot.conf                          | file name of config                        | keep the default                         |
+| sssdns_configdir                | no       | /srv/knot/config/                  | config dir on the host                     | this dir will be mapped into the container |
+| sssdns_zonedir                  | no       | /srv/knot/storage/                 | zone dir on the host                       | this dir will be mapped into the container |
+| sssdns_generated_zonedir        | no       | /srv/knot/ansible-generated-zones/ | dir to store the generated zone files into | only needed on the primary |
+| sssdns_nameserverprefix         | no       | "ns"                               | string                                     | if you like "dns1", "dns2" etc instead of just "ns1", "ns2", you can change it here |
+| sssdns_zoneadmin                | no       | zoneadmin.firstdnsserverdomain | string | The default email address for the SOA records |
+| sssdns_dns_zones                | no       | {{ playbook_dir }}/vars/zones/ | local directory | The place you'll store your zone YAMLs on your controller |
+| sssdns_disable_systemd_resolved | no | True | bool | If you don't want systemd-resolved to be disabled, set to False (not recommended) |
+
+
+Dependencies
+------------
+
+This depends on the `containers.podman` collection.
+
+Example Playbook
+----------------
+
+Check out dnsserver.yml of this repo
+
+License
+-------
+
+Not decided yet
+
+Author Information
+------------------
+
+Sven Michels, 2020
