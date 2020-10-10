@@ -1,0 +1,72 @@
+---
+# This is an example DNS zone. Save it just as the name of the domain, like
+# example.net and put it into sssdns_dns_zones directory.
+#
+# Note: A zone is perfectly fine without any records, so you can simply
+# add a domain to your servers by creating an empty file and add records
+# later.
+
+# Optional: the E-Mail address of the person responsible for the zone.
+# The @ must be replaced by a dot. If there is a dot prior the @-sign, you
+# need to quote it with a backslash, like mr\.admin.example.com.
+# And don't forget to add the dot at the end.
+#zoneadmin: dnsdepartment@example.org.
+
+# Optional: the default TimeToLife for the whole zone.
+# Default: 3600 seconds (one hour)
+#ttl: 600
+
+# Optional: the refresh time for the secondaries
+# Default: 10800 seconds (3 hours)
+#refresh: 10800
+
+# Optional: the retry time for the secondaries
+# Default: 3600 seconds (1 hour)
+#retry: 3600
+
+# Optional: how long will the secondaries keep the domain alive if your
+# hidden primary is not reached.
+# Default: 604800 seconds (two weeks)
+#expire: 604800
+
+# Optional: how long is a "negative" answer allowed to be cached
+# Default: 900 seconds (15 mins)
+#min_ttl: 900
+
+# Optional: instead of the default dnszone.j2 template, you can specify your
+# own template here. Just place it as sssdns_dnszone_TEMPLATE.j2 in your
+# plays 'templates' directory. Replace TEMPLATE in the filename by the name
+# you set as template here. If the template is missing, we'll fall back to
+# the build in template. Additionally you can place a file named
+# sssdns_dnszone_default.j2 in your 'templates' folder to override the built
+# in zone. Keep in mind that this may break things, so do it at your own
+# risk.
+#template: parkeddomain
+
+# The DNS records, one per row, no real input validation, but the role
+# will not load a broken zone as its validated on the DNS server.
+#records:
+## This will create an MX record at domain level (@ is replaced by the zone)
+## pointing to the host mail(.exampl.net.) with a priority of 10.
+## Don't forget to add the mail record later as well.
+#  - host: @
+#    type: MX
+#    data: 10 mail
+## This creates an spf record for your domain as well.
+#  - host: @
+#    type: TXT
+#    data: "v=spf1 mx ~all"
+## This will create an IPv4 record for host www(.example.net.) pointing to
+## IP 203.0.113.80
+#  - host: www
+#    type: A
+#    data: 203.0.113.80
+## This will create an IPv6 record for host www(.example.net.) pointing to
+## IP 2001:db8:80::80
+#  - host: www
+#    type: AAAA
+#    data: 2001:db8:80::80
+## This creates an alias (CNAME) for project(.example.net.) pointing to www
+#  - host: project
+#    type: CNAME
+#    data: www

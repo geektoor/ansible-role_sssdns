@@ -115,7 +115,7 @@ This depends on the `containers.podman` collection.
 Example Playbook
 ----------------
 
-Check out dnsserver.yml of this repo
+Check out example-playbook.yml, example-inventory and example.net-zone.yml of this repo
 
 License
 -------

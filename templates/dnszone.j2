@@ -9,7 +9,7 @@ $TTL {{ sssdns_zonedata.ttl|default('3600') }}
                                                 {{ sssdns_zonedata.refresh|default('10800') }}       ; Refresh  after 3 hours
                                                 {{ sssdns_zonedata.retry|default('3600') }}        ; Retry after 1 hour
                                                 {{ sssdns_zonedata.expire|default('1209600') }}     ; Expire after 2 weeks
-                                                {{ sssdns_zonedata.min_ttl|default('86400') }} )     ; Minimum TTL of 1 day
+                                                {{ sssdns_zonedata.min_ttl|default('900') }} )       ; Minimum TTL (negative caching) of 15 min
 
 {% if _dns_zone in sssdns_dnsserverdomains %}
 {%     for _mainserver in groups.dns_servers %}

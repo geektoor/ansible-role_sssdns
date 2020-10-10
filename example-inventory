@@ -1,0 +1,22 @@
+all:
+  vars:
+    sssdns_dnsserverdomains:
+      - example.com
+      - example.org
+  hosts:
+  children:
+    dns_hiddenprimary:
+      hosts:
+        hidden.example.com:
+          sssdns_listen:
+            - 0.0.0.0@5300
+            - ::@5300
+    dns_servers:
+      hosts:
+        servera.example.com:
+          dnsid: 1
+          sss_public_ipv4: 192.0.2.52
+          sss_public_ipv6: 2001:db8:5353::53/64
+        serverb.example.com:
+          dnsid: 2
+          sss_public_ipv4: 198.51.100.53
