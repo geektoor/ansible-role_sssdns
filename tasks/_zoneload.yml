@@ -44,10 +44,12 @@
 
 # If the zone was already up2date, or it passed validation, we add the zone
 # name to our list of active zones. This list will later be used to build the
-# main config file, listing all the zones.
+# main config file, listing all the zones. It also contains the DNSSEC
+# information to allow DNSSEC to be enabled and a policy to be configured on
+# a per domain/zone level.
 - name: add zone to list of active zones
   set_fact:
-    _dns_zones_active: "{{ _dns_zones_active|default([]) + [ _dns_zone ] }}"
+    _dns_zones_active: "{{ _dns_zones_active|default([]) + [ { 'domain': _dns_zone, 'dnssec': sssdns_zonedata.dnssec|default(false), 'dnssec_policy': sssdns_zonedata.dnssec_policy|default('default') } ] }}"
   when: 
     - not _dnszoneupdated.changed or _zonereverted.changed or (_dnszoneverify.rc is defined and _dnszoneverify.rc == 0) or (_dnszoneupdated.changed and _dynzonecheck is not skipped)
 

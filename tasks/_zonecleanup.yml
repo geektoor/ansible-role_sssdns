@@ -14,5 +14,4 @@
     label: "{{ item.path|basename|replace('.dnszone','') }}"
   vars:
     _remove_dns_zone: "{{ item.path|basename|replace('.dnszone','') }}"
-  when: item.path|basename|replace('.dnszone','') not in _dns_zones_active
-
+  when: item.path|basename|replace('.dnszone','') not in _dns_zones_active|map(attribute='domain')|list

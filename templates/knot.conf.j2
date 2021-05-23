@@ -57,6 +57,40 @@ remote:
 {{    active_dnsservers.append(hostvars[dnsserver].dnsid) -}}
 {%    endif %}
 {% endfor %}
+{% if inventory_hostname in groups.dns_hiddenprimary %}
+  - id: dnssec-validating-resolver
+    address: 8.8.8.8
+    address: 8.8.4.4
+    address: 2001:4860:4860::8888
+    address: 2001:4860:4860::8844
+
+submission:
+  - id: validating-resolver
+    parent: dnssec-validating-resolver
+    check-interval: 1h
+
+policy:
+  - id: default
+    nsec3: on
+    ksk-submission: validating-resolver
+  - id: shared
+    ksk-shared: on
+    nsec3: on
+    ksk-submission: validating-resolver
+  - id: rsa
+    algorithm: RSASHA256
+    ksk-size: 2048
+    zsk-size: 1024
+    nsec3: on
+    ksk-submission: validating-resolver
+  - id: rsa-shared
+    algorithm: RSASHA256
+    ksk-shared: on
+    ksk-size: 2048
+    zsk-size: 1024
+    nsec3: on
+    ksk-submission: validating-resolver
+{% endif %}
 
 key:
 {% if inventory_hostname in groups.dns_hiddenprimary %}
@@ -115,19 +149,36 @@ template:
     notify: {{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
 {%         endif %}
 {%     endfor %}
+  - id: dnssec
+    storage: "/storage"
+    file: "%s.dnszone"
+    dnssec-signing: on
+    dnssec-policy: default
+    zonefile-load: difference
+{%     for dnsserver in groups.dns_servers %}
+{%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
+    notify: {{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
+{%         endif %}
+{%     endfor %}
 {% endif %}
 
 
 zone:
 {% for active_dns_zone in _dns_zones_active %}
-  - domain: {{ active_dns_zone }}
+  - domain: {{ active_dns_zone.domain }}
 {%     if inventory_hostname in groups.dns_hiddenprimary %}
 {%         for active_dnsserver in active_dnsservers %}
     acl: acl_{{ sssdns_nameserverprefix }}{{ active_dnsserver }}
 {%         endfor %}
 {%         if sssdnskey_sets is defined %}
-{%             if active_dns_zone in sssdnskey_sets|map(attribute='id')|list %}
-    acl: acl_{{ active_dns_zone }}
+{%             if active_dns_zone.domain in sssdnskey_sets|map(attribute='id')|list %}
+    acl: acl_{{ active_dns_zone.domain }}
+{%             endif %}
+{%         endif %}
+{%         if active_dns_zone.dnssec %}
+    template: dnssec
+{%             if active_dns_zone.dnssec_policy != "default" %}
+    dnssec-policy: {{ active_dns_zone.dnssec_policy }}
 {%             endif %}
 {%         endif %}
 {%     else %}
