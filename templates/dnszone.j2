@@ -6,7 +6,7 @@
 $TTL {{ sssdns_zonedata.ttl|default('3600') }} 
 @ IN SOA {{ _primarydns }} {{ sssdns_zonedata.zoneadmin|default(sssdns_zoneadmin) }} (
                                                 ANSIBLE_SERIAL_PLACEHOLDER  ; Serial
-                                                {{ sssdns_zonedata.refresh|default('10800') }}       ; Refresh  after 3 hours
+                                                {{ sssdns_zonedata.refresh|default('14400') }}       ; Refresh  after 4 hours
                                                 {{ sssdns_zonedata.retry|default('3600') }}        ; Retry after 1 hour
                                                 {{ sssdns_zonedata.expire|default('1209600') }}     ; Expire after 2 weeks
                                                 {{ sssdns_zonedata.min_ttl|default('900') }} )       ; Minimum TTL (negative caching) of 15 min
@@ -23,11 +23,11 @@ $TTL {{ sssdns_zonedata.ttl|default('3600') }}
 {%     endfor %}
 
 {%     for _primarydns in groups.dns_hiddenprimary %}
-{%         if hostvars[_primarydns].sss_public_ipv4 is defined %}
-{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN A      {{ hostvars[_primarydns].sss_public_ipv4 }}
+{%         if hostvars[_primarydns].ansible_default_ipv4.address is defined %}
+{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN A      {{ hostvars[_primarydns].ansible_default_ipv4.address }}
 {%         endif %}
-{%         if hostvars[_primarydns].sss_public_ipv6 is defined %}
-{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN AAAA   {{ hostvars[_primarydns].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}
+{%         if hostvars[_primarydns].ansible_default_ipv6.address is defined %}
+{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN AAAA   {{ hostvars[_primarydns].ansible_default_ipv6.address|ansible.netcommon.ipaddr('address') }}
 {%         endif %}
 {%     endfor %}
 {%     for dnsserver in groups.dns_servers %}
