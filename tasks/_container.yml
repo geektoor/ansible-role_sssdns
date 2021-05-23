@@ -11,6 +11,15 @@
     state: stopped
   when: sssdns_disable_systemd_resolved|bool
 
+# Currently firewalld is not handled, so we disable it by default. Please
+# set sssdns_firewalld_disable to False.
+- name: disable firewalld
+  service:
+    name: firewalld
+    enabled: no
+    state: stopped
+  when: sssdns_disable_firewalld|bool
+
 # This task will create the actual knotd container.
 - name: create knotd
   podman_container:

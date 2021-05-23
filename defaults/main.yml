@@ -55,3 +55,7 @@ sssdns_dns_zones: "{{ playbook_dir }}/vars/zones/"
 # On some systems, systemd-resolved is active, preventing a DNS server from
 # listening to "any@53". So by default we will disable systemd-resolved.
 sssdns_disable_systemd_resolved: True
+
+# We don't have firewalld support yet, so we disable it by default.
+sssdns_disable_firewalld: True
+
