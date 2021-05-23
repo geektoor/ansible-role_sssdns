@@ -6,9 +6,13 @@
     path: "{{ sssdns_generated_zonedir }}/{{ _remove_dns_zone }}"
     state: absent
   when: inventory_hostname in groups.dns_hiddenprimary
+  tags:
+    - zones
 
 # We also remove the zone from the DNS servers zone directory.
 - name: "remove {{ _remove_dns_zone }} from DNS server"
   file:
     path: "{{ sssdns_zonedir }}/{{ _remove_dns_zone }}.dnszone"
     state: absent
+  tags:
+    - zones

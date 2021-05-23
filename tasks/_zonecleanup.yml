@@ -4,6 +4,8 @@
   find:
     paths: "{{ _ansible_managed_zones_dir }}"
   register: _dns_ansible_zones
+  tags:
+    - zones
 
 # In case a zone is no longer in the list of active zones, we will remove the
 # files from the server (and later tasks will also remove it from the config).
@@ -15,3 +17,5 @@
   vars:
     _remove_dns_zone: "{{ item.path|basename|replace('.dnszone','') }}"
   when: item.path|basename|replace('.dnszone','') not in _dns_zones_active|map(attribute='domain')|list
+  tags:
+    - zones

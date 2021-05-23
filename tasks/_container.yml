@@ -20,6 +20,15 @@
     state: stopped
   when: sssdns_disable_firewalld|bool
 
+- name: pull the latest image
+  podman_image:
+    name: cznic/knot
+    force: true
+  register: _containerimagepull
+  tags:
+    - never
+    - containerupdate
+
 # This task will create the actual knotd container.
 - name: create knotd
   podman_container:
@@ -31,6 +40,8 @@
       - /srv/knot/storage:/storage:Z
       - /srv/knot/config:/config:Z
   register: _containercreated
+  tags:
+    - containerupdate
 
 # As podman doesn't run as a service, we need to take care of the containers
 # at boot time ourself. So we simply create a service to start the container.

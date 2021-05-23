@@ -3,6 +3,8 @@
 # the handlers, so we can later catch errors.
 - name: run notified handlers to reload the servers if needed
   meta: flush_handlers
+  tags:
+    - zones
 
 # As the handler doesn't actually restart the service (as it would not
 # support to register the feedback), we will do it now if the variable
@@ -12,6 +14,8 @@
   register: _knot_restart
   ignore_errors: true
   when: _knot_restart_notified is defined
+  tags:
+    - zones
 
 # So if the config was changed and failed to reload, we will roll back the
 # backup of the config to ensure the config would still work in case of
@@ -27,6 +31,8 @@
     - _knot_restart.failed is defined
     - _knot_restart.failed
     - _confgenerated.backup_file is defined
+  tags:
+    - zones
 
 # We don't want to left backups of our config behind, we will remove them.
 - name: remove backup of knot.conf
@@ -36,6 +42,8 @@
   when:
    - _confgenerated.changed
    - _confgenerated.backup_file is defined
+  tags:
+    - zones
 
 # In case a zone failed to reload (but we catched it, restored it, so the
 # current served zone is the last known working on), we will fail at the
@@ -48,6 +56,8 @@
     - inventory_hostname not in groups.dns_hiddenprimary
     - hostvars[item]._dnszoneverify.failed is defined
     - hostvars[item]._dnszoneverify.failed
+  tags:
+    - zones
 
 # Same case if the knot.conf was broken
 - name: fail if knot.conf had errors
@@ -56,3 +66,5 @@
   when:
     - _knot_restart.failed is defined
     - _knot_restart.failed
+  tags:
+    - zones

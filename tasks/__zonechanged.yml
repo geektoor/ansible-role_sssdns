@@ -12,6 +12,8 @@
   when: 
     - sssdnskey_sets is defined
     - "item.path|basename in (sssdnskey_sets|map(attribute='id')|list)"
+  tags:
+    - zones
 
 # In case the zone was changed, we need to copy the generated file to the DNS
 # servers zone directory. We will also create a backup of the previous file,
@@ -25,6 +27,8 @@
   register: _dnszonecopy
   when:
     - (_dnszoneupdated.changed and _dynzonecheck is skipped) or not _zonefileexists.stat.exists
+  tags:
+    - zones
 
 # The serial is added only of the zone really was changed and copied to the
 # DNS servers zone directory. Would the serial be part of the template
@@ -35,6 +39,8 @@
     regexp: "ANSIBLE_SERIAL_PLACEHOLDER"
     replace: "{{ _dns_zone_serial }}"
   when: _dnszonecopy.changed
+  tags:
+    - zones
 
 # This task will actually verify the freshly generated zone is a valid DNS
 # zone. In case of any syntax errors or otherwise invalid entries, the
@@ -46,6 +52,8 @@
   notify:
    - reload knot
   when: _dnszonecopy.changed
+  tags:
+    - zones
 
 # If the verify filed, the zone is not a dynamicly managed one, and we have
 # a backup (cause the zone was successfully deployed prior), we will revert
@@ -62,6 +70,8 @@
     - _dnszoneupdated.changed
     - _dnszoneverify.failed
     - _dnszonecopy.backup_file is defined
+  tags:
+    - zones
 
 # The same is needed for the template, otherwise both would no longer match
 # and could cause trouble. So unless you don't fix your broken zone, the
@@ -76,6 +86,8 @@
     - _dnszoneupdated.changed
     - _dnszoneverify.failed
     - _dnszoneupdated.backup_file is defined
+  tags:
+    - zones
 
 # In case the verify was okay, we remove the backups of the template and the
 # zone, as they're no longer needed.
@@ -92,4 +104,6 @@
   when:
    - _dnszonecopy.changed
    - _dnszonecopy.backup_file is defined
+  tags:
+    - zones
 

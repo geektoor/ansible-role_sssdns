@@ -5,6 +5,8 @@
   include_vars:
     file: "{{ sssdns_dns_zones }}/{{ item.path|basename }}"
     name: sssdns_zonedata
+  tags:
+    - zones
 
 # This task will write a DNS zone file based on the default template,
 # or, if defined and found, a template named "sssdns_dnszone_{{templatename}}"
@@ -28,6 +30,8 @@
       paths:
         - 'templates'
   register: _dnszoneupdated
+  tags:
+    - zones
 
 # In case a zone file is gone, but the template is still there, we regenerate
 # the file. This is just a safety net.
@@ -35,12 +39,16 @@
   stat:
     path: "{{ sssdns_zonedir }}/{{ item.path|basename }}.dnszone"
   register: _zonefileexists
+  tags:
+    - zones
 
 # If the zone was actually modified, or the zonefile is missing, we trigger
 # the needed tasks to actually (re-)create it.
 - name: run tasks because zone was changed or is missing
   include_tasks: __zonechanged.yml
   when: _dnszoneupdated.changed or not _zonefileexists.stat.exists
+  tags:
+    - zones
 
 # If the zone was already up2date, or it passed validation, we add the zone
 # name to our list of active zones. This list will later be used to build the
@@ -52,4 +60,6 @@
     _dns_zones_active: "{{ _dns_zones_active|default([]) + [ { 'domain': _dns_zone, 'dnssec': sssdns_zonedata.dnssec|default(false), 'dnssec_policy': sssdns_zonedata.dnssec_policy|default('default') } ] }}"
   when: 
     - not _dnszoneupdated.changed or _zonereverted.changed or (_dnszoneverify.rc is defined and _dnszoneverify.rc == 0) or (_dnszoneupdated.changed and _dynzonecheck is not skipped)
+  tags:
+    - zones
 

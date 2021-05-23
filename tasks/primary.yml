@@ -62,6 +62,8 @@
 # This task file will write the knot.conf
 - name: write config
   import_tasks: _confgenerate.yml
+  tags:
+    - zones
 
 # To clean up the server, grab a list of zone files currently on the server
 # to compare them with the active zones. If a zone is no longer active,
@@ -74,9 +76,14 @@
 # In case the container is missing (on a fresh host for example, this task
 # file will take care of it.
 - name: ensure container is deployed
-  import_tasks: _container.yml
+  include_tasks: _container.yml
+  tags:
+    - containerupdate
 
 # All the final steps like running the handlers and catching possible issues
 # with the new configuration
 - name: finalize tasks
   import_tasks: _finalize.yml
+  tags:
+    - zones
+

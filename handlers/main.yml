@@ -4,4 +4,4 @@
 - name: reload knot
   set_fact:
     _knot_restart_notified: True
-  when: not _containercreated.changed
+  when: _containercreated is not defined or (_containercreated is defined and not _containercreated.changed)
