@@ -104,7 +104,13 @@ There are only a very few variables that you need to set, all the rest will be g
 | no
 | True
 | bool
-| If you don't want systemd-resolved to be disabled, set to False (not recommended) |
+| If you don't want systemd-resolved to be disabled, set to False (not recommended)
+
+| sssdns_disable_firewalld
+| no
+| True
+| bool
+| Currently sssdns has no firewalld support, so if you take care of your firewalld, you can set it to false |
 |===
 
 Dependencies
@@ -125,4 +131,4 @@ Not decided yet
 Author Information
 ------------------
 
-Sven Michels, 2020
+Sven Michels, 2020-2021
