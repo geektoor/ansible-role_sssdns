@@ -15,10 +15,10 @@ $TTL {{ sssdns_zonedata.ttl|default('3600') }}
 {%     for _mainserver in groups.dns_servers %}
 {{ '%-20s'|format("@") }} 86400  IN NS     {{ sssdns_nameserverprefix }}{{ hostvars[_mainserver].dnsid }}
 {%         if hostvars[_mainserver].sss_public_ipv4 is defined %}
-{{ '%-20s'|format("ns"+hostvars[_mainserver].dnsid|string) }} 86400  IN A      {{ hostvars[_mainserver].sss_public_ipv4 }}
+{{ '%-20s'|format(sssdns_nameserverprefix+hostvars[_mainserver].dnsid|string) }} 86400  IN A      {{ hostvars[_mainserver].sss_public_ipv4 }}
 {%         endif %}
 {%         if hostvars[_mainserver].sss_public_ipv6 is defined %}
-{{ '%-20s'|format("ns"+hostvars[_mainserver].dnsid|string) }} 86400  IN AAAA   {{ hostvars[_mainserver].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}
+{{ '%-20s'|format(sssdns_nameserverprefix+hostvars[_mainserver].dnsid|string) }} 86400  IN AAAA   {{ hostvars[_mainserver].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}
 {%         endif %}
 {%     endfor %}
 
