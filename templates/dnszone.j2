@@ -23,19 +23,19 @@ $TTL {{ sssdns_zonedata.ttl|default('3600') }}
 {%     endfor %}
 
 {%     for _primarydns in groups.dns_hiddenprimary %}
-{%         if hostvars[_primarydns].ansible_default_ipv4.address is defined %}
-{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN A      {{ hostvars[_primarydns].ansible_default_ipv4.address }}
+{%         if hostvars[_primarydns].sss_mgmt_addr_v4 is defined %}
+{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN A      {{ hostvars[_primarydns].sss_mgmt_addr_v4 }}
 {%         endif %}
-{%         if hostvars[_primarydns].ansible_default_ipv6.address is defined %}
-{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN AAAA   {{ hostvars[_primarydns].ansible_default_ipv6.address|ansible.netcommon.ipaddr('address') }}
+{%         if hostvars[_primarydns].sss_mgmt_addr_v6 is defined %}
+{{ '%-27s'|format(_primarydns.split(".")[0]|lower) }} IN AAAA   {{ hostvars[_primarydns].sss_mgmt_addr_v6|ansible.netcommon.ipaddr('address') }}
 {%         endif %}
 {%     endfor %}
 {%     for dnsserver in groups.dns_servers %}
-{%         if hostvars[dnsserver].sss_public_ipv4 is defined %}
-{{ '%-27s'|format(dnsserver.split(".")[0]|lower) }} IN A      {{ hostvars[dnsserver].sss_public_ipv4 }}
+{%         if hostvars[dnsserver].sss_mgmt_addr_v4 is defined %}
+{{ '%-27s'|format(dnsserver.split(".")[0]|lower) }} IN A      {{ hostvars[dnsserver].sss_mgmt_addr_v4 }}
 {%         endif %}
-{%         if hostvars[dnsserver].sss_public_ipv6 is defined %}
-{{ '%-27s'|format(dnsserver.split(".")[0]|lower) }} IN AAAA   {{ hostvars[dnsserver].sss_public_ipv6|ansible.netcommon.ipaddr('address') }}
+{%         if hostvars[dnsserver].sss_mgmt_addr_v6 is defined %}
+{{ '%-27s'|format(dnsserver.split(".")[0]|lower) }} IN AAAA   {{ hostvars[dnsserver].sss_mgmt_addr_v6|ansible.netcommon.ipaddr('address') }}
 {%         endif %}
 {%    endfor %}
 heartbeat            60     IN TXT    "imalive"

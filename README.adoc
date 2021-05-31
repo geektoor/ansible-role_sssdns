@@ -52,6 +52,18 @@ There are only a very few variables that you need to set, all the rest will be g
 | IPv6 Address(with netmask)
 | set only on the exposed DNS servers
 
+| sss_mgmt_addr_v4
+| no
+| not set
+| IPv4 Address
+| The address the server is managed with using their name, will be added to zone.
+
+| sss_mgmt_addr_v6
+| no
+| not set
+| IPv6 Address(with netmask)
+| The address the server is managed with using their name, will be added to zone.
+
 | sssdns_listen
 | yes
 | [ "0.0.0.0@53", "::@53" ]
