@@ -44,7 +44,7 @@ remote:
 {%     if inventory_hostname in groups.dns_hiddenprimary %}
 {%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
   - id: {{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
-{%             if (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is not defined) or (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is defined and (hostvars[dnsserver].ansible_host != hostvars[dnsserver].sss_public_ipv4)) %}
+{%             if (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is not defined) %}
     address: {{ hostvars[dnsserver].ansible_host }}@53
 {%             endif %}
 {%             if hostvars[dnsserver].sss_public_ipv4 is defined %}
