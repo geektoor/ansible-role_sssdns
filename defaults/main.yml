@@ -59,3 +59,4 @@ sssdns_disable_systemd_resolved: True
 # We don't have firewalld support yet, so we disable it by default.
 sssdns_disable_firewalld: True
 
+_dnsservers: []
