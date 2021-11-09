@@ -20,6 +20,12 @@
     state: stopped
   when: sssdns_disable_firewalld|bool
 
+- name: clean old podman ressources
+  command: "podman system prune -f"
+  tags:
+    - never
+    - containerupdate
+
 - name: pull the latest image
   podman_image:
     name: cznic/knot
