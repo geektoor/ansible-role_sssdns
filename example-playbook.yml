@@ -1,21 +1,25 @@
 ---
 - name: Pre Tasks on DNS Servers
-  gather_facts: no
+  gather_facts: yes
   hosts: dns_servers
   tasks:
     - name: Configure Secondary DNS
       include_role:
         name: sssdns
         tasks_from: secondary_pretasks
+      tags:
+        - always
 
 - name: Play for Primary DNS
-  gather_facts: no
+  gather_facts: yes
   hosts: dns_hiddenprimary
   tasks:
     - name: Configure Primary DNS
       include_role:
         name: sssdns
         tasks_from: primary
+      tags:
+        - always
 
 - name: Play for Secondary DNS
   gather_facts: no
@@ -25,3 +29,5 @@
       include_role:
         name: sssdns
         tasks_from: secondary
+      tags:
+        - always
