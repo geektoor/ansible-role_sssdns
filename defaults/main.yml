@@ -60,3 +60,13 @@ sssdns_disable_systemd_resolved: True
 sssdns_disable_firewalld: True
 
 _dnsservers: []
+
+# container image and tag can be defined if needed. So we need to set some
+# sane defaults.
+#
+# Image: cznic/knot (default)
+sssdns_imagename: cznic/knot
+
+# Image Tag: latest (default)
+sssdns_imagetag: latest
+
