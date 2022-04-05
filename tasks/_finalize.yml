@@ -25,6 +25,7 @@
   copy:
     src: "{{ _confgenerated.backup_file }}"
     dest: "{{ sssdns_configdir }}/{{ sssdns_configname }}"
+    mode: 0644
     remote_src: True
   when:
     - _confgenerated.changed

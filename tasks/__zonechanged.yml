@@ -9,7 +9,7 @@
   set_fact:
     _is_dyn_zone: True
   register: _dynzonecheck
-  when: 
+  when:
     - sssdnskey_sets is defined
     - "item.path|basename in (sssdnskey_sets|map(attribute='id')|list)"
   tags:
@@ -23,6 +23,7 @@
     src: "{{ sssdns_generated_zonedir }}/{{ item.path|basename }}"
     dest: "{{ sssdns_zonedir }}/{{ item.path|basename }}.dnszone"
     remote_src: True
+    mode: 0644
     backup: True
   register: _dnszonecopy
   when:
@@ -63,6 +64,7 @@
   copy:
     src: "{{ _dnszonecopy.backup_file }}"
     dest: "{{ sssdns_zonedir }}/{{ item.path|basename }}.dnszone"
+    mode: 0644
     remote_src: True
   register: _zonereverted
   when:
@@ -80,6 +82,7 @@
   copy:
     src: "{{ _dnszoneupdated.backup_file }}"
     dest: "{{ sssdns_generated_zonedir }}/{{ item.path|basename }}"
+    mode: 0644
     remote_src: True
   when:
     - _dynzonecheck is skipped

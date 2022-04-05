@@ -19,8 +19,9 @@
 # the default template in your deployment.
 - name: "write zonefile for {{ item.path|basename }}"
   template:
-    src: "{{ lookup('first_found', params)}}"
+    src: "{{ lookup('first_found', params) }}"
     dest: "{{ sssdns_generated_zonedir }}/{{ item.path|basename }}"
+    mode: 0644
     backup: True
   vars:
     params:
@@ -58,7 +59,7 @@
 - name: add zone to list of active zones
   set_fact:
     _dns_zones_active: "{{ _dns_zones_active|default([]) + [ { 'domain': _dns_zone, 'dnssec': sssdns_zonedata.dnssec|default(false), 'dnssec_policy': sssdns_zonedata.dnssec_policy|default('default') } ] }}"
-  when: 
+  when:
     - not _dnszoneupdated.changed or _zonereverted.changed or (_dnszoneverify.rc is defined and _dnszoneverify.rc == 0) or (_dnszoneupdated.changed and _dynzonecheck is not skipped)
   tags:
     - zones

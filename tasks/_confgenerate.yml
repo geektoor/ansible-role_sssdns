@@ -5,6 +5,7 @@
   template:
     src: knot.conf.j2
     dest: "{{ sssdns_configdir }}/{{ sssdns_configname }}"
+    mode: 0644
     backup: True
   register: _confgenerated
   notify:
