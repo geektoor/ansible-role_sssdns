@@ -138,9 +138,9 @@ Check out example-playbook.yml, example-inventory and example.net-zone.yml of th
 License
 -------
 
-Not decided yet
+CC-BY-SA
 
 Author Information
 ------------------
 
-Sven Michels, 2020-2021
+Sven Michels, 2020-2022
