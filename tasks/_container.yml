@@ -39,7 +39,7 @@
 
 # This task will create the actual knotd container.
 - name: create knotd
-  podman_container:
+  containers.podman.podman_container:
     name: knotd
     image: "{{ sssdns_imagename }}:{{ sssdns_imagetag }}"
     command: knotd
