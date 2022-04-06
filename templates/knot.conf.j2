@@ -12,7 +12,7 @@ server:
 {% else %}
 #    user: knot:knot
 {% endif %}
-{% for listenaddr in sssdns_listen %}
+{% for listenaddr in sssdns_listen|sort %}
     listen: {{ listenaddr }}
 {% endfor %}
     edns-client-subnet: on
@@ -35,12 +35,12 @@ mod-rrl:
 
 remote:
 {% if inventory_hostname in groups.dns_servers %}
-{% for hiddenprimary in groups.dns_hiddenprimary %}
+{% for hiddenprimary in groups.dns_hiddenprimary|sort %}
   - id: {{ hiddenprimary }}
     address: {{ hostvars[hiddenprimary].ansible_host }}@5300
 {% endfor %}
 {% endif %}
-{% for dnsserver in groups.dns_servers %}
+{% for dnsserver in groups.dns_servers|sort %}
 {%     if inventory_hostname in groups.dns_hiddenprimary %}
 {%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
   - id: {{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
@@ -95,7 +95,7 @@ policy:
 key:
 {% if inventory_hostname in groups.dns_hiddenprimary %}
 {%     if sssdnskey_sets is defined %}
-{%         for keyset in sssdnskey_sets %}
+{%         for keyset in sssdnskey_sets|sort %}
   - id: key_{{ keyset.id }}
     algorithm: {{ keyset.algorithm }}
     secret: {{ keyset.secret }}
@@ -112,7 +112,7 @@ acl:
 {%     endfor %}
 {% endif %}
 {% if inventory_hostname in groups.dns_hiddenprimary %}
-{%     for dnsserver in groups.dns_servers %}
+{%     for dnsserver in groups.dns_servers|sort %}
 {%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
   - id: acl_{{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
 {%             if (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is not defined) or (hostvars[dnsserver].ansible_host is defined and hostvars[dnsserver].sss_public_ipv4 is defined and (hostvars[dnsserver].ansible_host != hostvars[dnsserver].sss_public_ipv4)) %}
@@ -128,7 +128,7 @@ acl:
 {%         endif %}
 {%     endfor %}
 {%     if sssdnskey_sets is defined %}
-{%         for keyset in sssdnskey_sets %}
+{%         for keyset in sssdnskey_sets|sort %}
   - id: acl_{{ keyset.id }}
     key: key_{{ keyset.id }}
     action: [ transfer, update ]
@@ -144,7 +144,7 @@ template:
     global-module: mod-cookies/default # Enable DNS Cookies globally
     global-module: mod-rrl/default # Ratelimiting
 {% if inventory_hostname in groups.dns_hiddenprimary %}
-{%     for dnsserver in groups.dns_servers %}
+{%     for dnsserver in groups.dns_servers|sort %}
 {%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
     notify: {{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
 {%         endif %}
@@ -155,7 +155,7 @@ template:
     dnssec-signing: on
     dnssec-policy: default
     zonefile-load: difference
-{%     for dnsserver in groups.dns_servers %}
+{%     for dnsserver in groups.dns_servers|sort %}
 {%         if hostvars[dnsserver].dnsid is defined and (hostvars[dnsserver].sss_public_ipv4 is defined or hostvars[dnsserver].ansible_host is defined or hostvars[dnsserver].sss_public_ipv6 is defined) %}
     notify: {{ sssdns_nameserverprefix }}{{ hostvars[dnsserver].dnsid }}
 {%         endif %}
@@ -164,10 +164,10 @@ template:
 
 
 zone:
-{% for active_dns_zone in _dns_zones_active %}
+{% for active_dns_zone in _dns_zones_active|sort(attribute='domain') %}
   - domain: {{ active_dns_zone.domain }}
 {%     if inventory_hostname in groups.dns_hiddenprimary %}
-{%         for active_dnsserver in active_dnsservers %}
+{%         for active_dnsserver in active_dnsservers|sort %}
     acl: acl_{{ sssdns_nameserverprefix }}{{ active_dnsserver }}
 {%         endfor %}
 {%         if sssdnskey_sets is defined %}
