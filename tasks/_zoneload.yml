@@ -58,9 +58,16 @@
 # a per domain/zone level.
 - name: add zone to list of active zones
   set_fact:
-    _dns_zones_active: "{{ _dns_zones_active|default([]) + [ { 'domain': _dns_zone, 'dnssec': sssdns_zonedata.dnssec|default(false), 'dnssec_policy': sssdns_zonedata.dnssec_policy|default('default') } ] }}"
-  when:
-    - not _dnszoneupdated.changed or _zonereverted.changed or (_dnszoneverify.rc is defined and _dnszoneverify.rc == 0) or (_dnszoneupdated.changed and _dynzonecheck is not skipped)
+    _dns_zones_active: "{{ _dns_zones_active|default([]) + 
+      [ { 'domain': _dns_zone,
+          'dnssec': sssdns_zonedata.dnssec|default(false),
+          'dnssec_policy': sssdns_zonedata.dnssec_policy|default('default') }
+      ] }}"
+  when: >
+    not _dnszoneupdated.changed or
+    _zonereverted.changed or
+    (_dnszoneverify.rc is defined and _dnszoneverify.rc == 0) or
+    (_dnszoneupdated.changed and _dynzonecheck is not skipped)
   tags:
     - zones
 

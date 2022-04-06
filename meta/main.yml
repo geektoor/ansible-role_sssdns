@@ -6,8 +6,8 @@ galaxy_info:
   description: role to manage a authorative dns cluster (with knot)
   license: CC-BY-SA
   min_ansible_version: 2.0
+  platforms:
+  - name: EL
+    versions:
+    - 8
 
-# As we manage a podman container, you need to have the podman collection to
-# be used.
-collections:
-  - containers.podman

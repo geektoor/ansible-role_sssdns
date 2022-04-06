@@ -26,8 +26,9 @@
     mode: 0644
     backup: True
   register: _dnszonecopy
-  when:
-    - (_dnszoneupdated.changed and _dynzonecheck is skipped) or not _zonefileexists.stat.exists
+  when: >
+    (_dnszoneupdated.changed and _dynzonecheck is skipped) or
+    not _zonefileexists.stat.exists
   tags:
     - zones
 
@@ -47,7 +48,14 @@
 # zone. In case of any syntax errors or otherwise invalid entries, the
 # verify will fail.
 - name: verify zone is valid
-  command: "podman run --rm -v {{ sssdns_configdir }}:/config:Z -v {{ sssdns_zonedir }}:/storage:Z cznic/knot kzonecheck -o {{ item.path|basename }} /storage/{{ item.path|basename }}.dnszone"
+  command: >-
+    podman run
+    --rm
+    -v {{ sssdns_configdir }}:/config:Z
+    -v {{ sssdns_zonedir }}:/storage:Z
+    cznic/knot
+    kzonecheck
+    -o {{ item.path|basename }} /storage/{{ item.path|basename }}.dnszone
   ignore_errors: True
   register: _dnszoneverify
   notify:
