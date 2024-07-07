@@ -65,7 +65,7 @@ _dnsservers: []
 # sane defaults.
 #
 # Image: cznic/knot (default)
-sssdns_imagename: cznic/knot
+sssdns_imagename: docker.io/cznic/knot
 
 # Image Tag: latest (default)
 sssdns_imagetag: latest
