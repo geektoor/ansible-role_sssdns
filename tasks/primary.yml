@@ -33,18 +33,9 @@
 # In case we update any zone, we will use this serial, so zones updated within
 # the same run will also have the same serial. And its simply based on
 # unixtime (seconds since 01.01.1970)
-- name: get epoch time for serial
-  command: "date +%s"
-  register: _dateepoch
-  changed_when: False
-  check_mode: no
-  delegate_to: localhost
-  tags:
-    - always
-
 - name: set zone serial to epoch
   set_fact:
-    _dns_zone_serial: "{{ _dateepoch.stdout }}"
+    _dns_zone_serial: "{{ ansible_date_time.epoch }}"
   tags:
     - always
 
