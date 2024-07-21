@@ -97,7 +97,7 @@ key:
 {%     if sssdnskey_sets is defined %}
 {%         for keyset in sssdnskey_sets %}
   - id: key_{{ keyset.id }}
-    algorithm: {{ keyset.algorithm }}
+    algorithm: {{ keyset.algorithm|default('hmac-sha512') }}
     secret: {{ keyset.secret }}
 {%         endfor %}
 {%     endif %}
@@ -131,8 +131,8 @@ acl:
 {%         for keyset in sssdnskey_sets %}
   - id: acl_{{ keyset.id }}
     key: key_{{ keyset.id }}
-    action: [ transfer, update ]
-    update-type: [ A, AAAA, TXT, CNAME, SRV ]
+    action: [ {{ keyset.action|default('transfer, update') }} ]
+    update-type: [ {{ keyset.updatetype|default('A, AAAA, TXT, CNAME, SRV') }} ]
 {%         endfor %}
 {%     endif %}
 {% endif %}
